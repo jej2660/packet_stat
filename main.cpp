@@ -126,8 +126,7 @@ void statistics(){
     }
 
     for(vector<DisplayInfo>::iterator it = result.begin();it != result.end();it++){
-        DisplayInfo tmp = *it;//debug point
-        cout << "IP A: " << string(it->sip) << endl << "IP B: " << string(it->dip) << endl << "port A: " << it->sip << endl << "port B: " << it->dip
+        cout << "IP A: " << string(it->sip) << endl << "IP B: " << string(it->dip) << endl << "port A: " << it->sp << endl << "port B: " << it->dp
               << endl << "All count: " << it->dcount + it->scount << endl << "All packet byte: " << it->dbyte + it->sbyte << endl << "count A-->B: " << it->scount << endl
              << "count B-->A: " << it->dcount << endl << "Byte A-->B: " << it->sbyte << endl << "Byte B-->A: " << it->dbyte << endl << endl << endl;
     }
