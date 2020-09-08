@@ -5,7 +5,7 @@
 #include "ip.h"
 #include <map>
 #include "info.h"
-#include "vector"
+#include <vector>
 #include <iostream>
 #include <algorithm>
 
@@ -44,9 +44,8 @@ int main(int argc, char* argv[]) {
             break;
         }
         parsing(packet,header);
-        //printf("%u bytes captured\n", header->caplen);
-        statistics();
     }
+    statistics();
     pcap_close(handle);
 }
 
@@ -54,11 +53,12 @@ void parsing(const u_char *packet, pcap_pkthdr *header){
     struct PacketInfo tmp;
     libnet_ipv4_hdr *ipv4 = (libnet_ipv4_hdr *)(packet + 14);
     u_char pro = ipv4->ip_p;
+
+    //protocol classfication
     if(pro == IPPROTO_TCP){
         libnet_tcp_hdr *tcphdr = (libnet_tcp_hdr *)(packet + 14 + ipv4->ip_hl * 4);
         tmp.sourceip = Ip(ntohl(ipv4->ip_src.s_addr));
         tmp.destip = Ip(ntohl(ipv4->ip_dst.s_addr));
-        //cout << string(tmp.sourceip) << endl;
         tmp.sourceport = ntohs(tcphdr->th_sport);
         tmp.destport = ntohs(tcphdr->th_dport);
         tmp.bytelen = header->caplen;
@@ -69,7 +69,6 @@ void parsing(const u_char *packet, pcap_pkthdr *header){
         libnet_udp_hdr *udphdr = (libnet_udp_hdr *)(packet + 14 + ipv4->ip_hl * 4);
         tmp.sourceip = Ip(ntohl(ipv4->ip_src.s_addr));
         tmp.destip = Ip(ntohl(ipv4->ip_dst.s_addr));
-        //cout << string(tmp.sourceip) << endl;
         tmp.sourceport = ntohs(udphdr->uh_sport);
         tmp.destport = ntohs(udphdr->uh_dport);
         tmp.bytelen = header->caplen;
@@ -103,9 +102,6 @@ void statistics(){
         }
         stat[tmp] = tmpvec;
     }
-
-
-
     vector<DisplayInfo> result;
     for(mit = stat.begin();mit != stat.end();mit++){
         PacketInfo ptmp = *(mit->second.begin());
@@ -120,8 +116,6 @@ void statistics(){
                 dtmp.scount += it->bytelen;
             }
             result.push_back(dtmp);
-            //cout << string(it->sourceip) << endl << string(it->destip) << endl;
-            //printf("A Ip: %s\n B Ip: %s\n A port: %d\n B port: %d\n flag: %d", string(it->sourceip),string(it->destip),it->sourceport, it->destport, i)
         }
     }
 
@@ -130,42 +124,4 @@ void statistics(){
               << endl << "All count: " << it->dcount + it->scount << endl << "All packet byte: " << it->dbyte + it->sbyte << endl << "count A-->B: " << it->scount << endl
              << "count B-->A: " << it->dcount << endl << "Byte A-->B: " << it->sbyte << endl << "Byte B-->A: " << it->dbyte << endl << endl << endl;
     }
-        //info[Check(it->sourceip,it->sourceport,it->bytelen, count)] = Check(it->destip,it->destport,it->bytelen, count+1);
-    //map<Check,Check>::iterator fit;
-    //map<Check,Check>::iterator sit;
-    /*
-    for(fit = info.begin();fit!=info.end();fit++){//dubun ban bok check
-        for(sit = info.begin();sit != info.end();sit++){
-            if( (fit->first.ip == sit->first.ip) && (fit->first.port == sit->first.port) && (fit->second.ip == sit->second.ip) && (fit->second.port == sit->second.port))
-            {
-                DisplayInfo key = DisplayInfo(fit->first.ip,fit->second.ip,fit->first.port,fit->second.port,1,0,0,0);
-                if(display.find(key) == display.end()){
-                    display[key] = DisplayInfo(fit->first.ip,fit->second.ip,fit->first.port,fit->second.port,1,0,0,0);
-                    display[key].byte += fit->first.byte;
-                    display[key].stod += fit->first.byte;
-                }
-                else{
-                    display[key].count++;
-                    display[key].byte += fit->first.byte;
-                    display[key].stod += fit->first.byte;
-                }
-
-            }
-            else if( (fit->first.ip == sit->second.ip) && (fit->first.port == sit->second.port) && (fit->second.ip == sit->first.ip) && (fit->second.port == sit->first.port))
-            {
-                DisplayInfo key = DisplayInfo(fit->first.ip,fit->second.ip,fit->first.port,fit->second.port,1,0,0,0);
-                if(display.find(key) == display.end()){
-                    display[key] = DisplayInfo(fit->first.ip,fit->second.ip,fit->first.port,fit->second.port,1,0,0,0);
-                    display[key].byte += sit->first.byte;
-                    display[key].dtos += sit->first.byte;
-                }
-                else{
-                    display[key].count++;
-                    display[key].byte += sit->first.byte;
-                    display[key].dtos += sit->first.byte;
-                }
-            }
-        }
-    }
-    */
 }
