@@ -86,20 +86,20 @@ void statistics(){
     unordered_map<Check, vector<PacketInfo>, MyHashFuntion> stat;
     unordered_map<Check, vector<PacketInfo>, MyHashFuntion>::iterator mit;
     for(it = table.begin();it != table.end();it++){
-        Check tmp(it->sourceip, it->sourceport, it->destip, it->destport);
-        Check tmp2(it->destip, it->destport, it->sourceip, it->sourceport);
+        Check tmp(it->sourceip, it->sourceport, it->destip, it->destport,it->protocol);
+        Check tmp2(it->destip, it->destport, it->sourceip, it->sourceport,it->protocol);
         vector<PacketInfo> tmpvec;
 
         if(!(stat.count(tmp) == 1 || stat.count(tmp2) == 1)){
             for(st = (it++);st != table.end();st++){
                 if( (it->sourceip.ip_ == st->destip.ip_) && (it->sourceport == st->destport) &&
-                        (it->destip.ip_ == st->sourceip.ip_) && (it->destport == st->sourceport) )//ban dae
+                        (it->destip.ip_ == st->sourceip.ip_) && (it->destport == st->sourceport && (it->protocol == st->protocol)) )//ban dae
                 {
                     st->flag = 1;
                     tmpvec.push_back(*st);
                 }
                 else if( (it->sourceip.ip_ == st->sourceip.ip_) && (it->sourceport == st->sourceport) &&
-                         (it->destip.ip_ == st->destip.ip_) && (it->destport == st->destport))//dong ill
+                         (it->destip.ip_ == st->destip.ip_) && (it->destport == st->destport) && (it->protocol == st->protocol))//dong ill
                 {
                     tmpvec.push_back(*st);
                 }
@@ -110,7 +110,7 @@ void statistics(){
     vector<DisplayInfo> result;
     for(mit = stat.begin();mit != stat.end();mit++){
         PacketInfo ptmp = *(mit->second.begin());
-        DisplayInfo dtmp(ptmp.sourceip, ptmp.destip,ptmp.sourceport,ptmp.destport,0,0,0,0);
+        DisplayInfo dtmp(ptmp.sourceip, ptmp.destip,ptmp.sourceport,ptmp.destport,0,0,0,0,ptmp.protocol);
         for(it = mit->second.begin(); it != mit->second.end();it++){
             if(it->flag == 1){
                 dtmp.dbyte += it->bytelen;
@@ -118,15 +118,24 @@ void statistics(){
             }
             else{
                 dtmp.sbyte += it->bytelen;
-                dtmp.scount += it->bytelen;
+                dtmp.scount++;
             }
         }
         result.push_back(dtmp);
     }
     for(vector<DisplayInfo>::iterator it = result.begin();it != result.end();it++){
+        if(it->protocol == IPPROTO_TCP){
+        cout << "TCP " << endl;
         cout << "IP A: " << string(it->sip) << endl << "IP B: " << string(it->dip) << endl << "port A: " << it->sp << endl << "port B: " << it->dp
               << endl << "All count: " << it->dcount + it->scount << endl << "All packet byte: " << it->dbyte + it->sbyte << endl << "count A-->B: " << it->scount << endl
              << "count B-->A: " << it->dcount << endl << "Byte A-->B: " << it->sbyte << endl << "Byte B-->A: " << it->dbyte << endl << endl << endl;
+        }
+        else if(it->protocol == IPPROTO_UDP){
+            cout << "UDP " << endl;
+            cout << "IP A: " << string(it->sip) << endl << "IP B: " << string(it->dip) << endl << "port A: " << it->sp << endl << "port B: " << it->dp
+                  << endl << "All count: " << it->dcount + it->scount << endl << "All packet byte: " << it->dbyte + it->sbyte << endl << "count A-->B: " << it->scount << endl
+                 << "count B-->A: " << it->dcount << endl << "Byte A-->B: " << it->sbyte << endl << "Byte B-->A: " << it->dbyte << endl << endl << endl;
+        }
 
     }
 }
