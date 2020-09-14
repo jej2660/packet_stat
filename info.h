@@ -21,15 +21,17 @@ public:
     u_int16_t port;
     Ip dip;
     u_int16_t dport;
-    Check(Ip ip, u_int16_t port, Ip dip, u_int16_t dport){
+    int protocol;
+    Check(Ip ip, u_int16_t port, Ip dip, u_int16_t dport,int protocol){
         this->ip = ip;
         this->port = port;
         this->dip = dip;
         this->dport = dport;
+        this->protocol = protocol;
     }
     Check();
     bool operator== (const Check &r) const{
-        return ( (this->ip == r.ip && this->port == r.port && this->dip == r.dip && this->dport == r.dport));
+        return ( (this->ip == r.ip && this->port == r.port && this->dip == r.dip && this->dport == r.dport && this->protocol == r.protocol));
     }
     /*
     bool operator< (const Check &r) const {
@@ -54,9 +56,10 @@ public:
     int dcount;
     int sbyte;
     int dbyte;
+    int protocol;
 
     DisplayInfo();
-    DisplayInfo(Ip sip, Ip dip, u_int16_t sp, u_int16_t dp, int scount, int dcount, int sbyte, int dbyte){
+    DisplayInfo(Ip sip, Ip dip, u_int16_t sp, u_int16_t dp, int scount, int dcount, int sbyte, int dbyte,int protocol){
         this->sip = sip;
         this->dip = dip;
         this->sp = sp;
@@ -65,5 +68,6 @@ public:
         this->dcount = dcount;
         this->sbyte = sbyte;
         this->dbyte = dbyte;
+        this->protocol = protocol;
     }
 };
