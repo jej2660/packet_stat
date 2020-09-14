@@ -4,11 +4,11 @@
 #include <netinet/in.h>
 #include "ip.h"
 #include <map>
+#include <unordered_map>
 #include "info.h"
 #include <vector>
 #include <iostream>
 #include <algorithm>
-
 
 using namespace std;
 vector<PacketInfo> table;
@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
         int res = pcap_next_ex(handle, &header, &packet);
         if (res == 0) continue;
         if (res == -1 || res == -2) {
-            printf("pcap_next_ex return %d(%s)\n", res, pcap_geterr(handle));
+            //printf("pcap_next_ex return %d(%s)\n", res, pcap_geterr(handle));
             break;
         }
         parsing(packet,header);
@@ -63,9 +63,10 @@ void parsing(const u_char *packet, pcap_pkthdr *header){
         tmp.destport = ntohs(tcphdr->th_dport);
         tmp.bytelen = header->caplen;
         tmp.flag = 0;
+        tmp.protocol = IPPROTO_TCP;
         table.push_back(tmp);
     }
-    if(pro == IPPROTO_UDP){
+    else if(pro == IPPROTO_UDP){
         libnet_udp_hdr *udphdr = (libnet_udp_hdr *)(packet + 14 + ipv4->ip_hl * 4);
         tmp.sourceip = Ip(ntohl(ipv4->ip_src.s_addr));
         tmp.destip = Ip(ntohl(ipv4->ip_dst.s_addr));
@@ -73,34 +74,38 @@ void parsing(const u_char *packet, pcap_pkthdr *header){
         tmp.destport = ntohs(udphdr->uh_dport);
         tmp.bytelen = header->caplen;
         tmp.flag = 0;
+        tmp.protocol = IPPROTO_UDP;
         table.push_back(tmp);
     }
 }
+
+
 void statistics(){
     vector<PacketInfo>::iterator it;
     vector<PacketInfo>::iterator st;
-    map<Check, vector<PacketInfo> > stat;
-    map<Check, vector<PacketInfo>>::iterator mit;
-
+    unordered_map<Check, vector<PacketInfo>, MyHashFuntion> stat;
+    unordered_map<Check, vector<PacketInfo>, MyHashFuntion>::iterator mit;
     for(it = table.begin();it != table.end();it++){
         Check tmp(it->sourceip, it->sourceport, it->destip, it->destport);
+        Check tmp2(it->destip, it->destport, it->sourceip, it->sourceport);
         vector<PacketInfo> tmpvec;
-        if(!stat.count(tmp)){
-            for(st = table.begin();st != table.end();st++){
-                if( (it->sourceip == st->destip) && (it->sourceport == st->destport) &&
-                        (it->destip == st->sourceip) && (it->destport == st->sourceport) )//ban dae
+
+        if(!(stat.count(tmp) == 1 || stat.count(tmp2) == 1)){
+            for(st = (it++);st != table.end();st++){
+                if( (it->sourceip.ip_ == st->destip.ip_) && (it->sourceport == st->destport) &&
+                        (it->destip.ip_ == st->sourceip.ip_) && (it->destport == st->sourceport) )//ban dae
                 {
                     st->flag = 1;
                     tmpvec.push_back(*st);
                 }
-                else if( (it->sourceip == st->sourceip) && (it->sourceport == st->sourceport) &&
-                         (it->destip == st->destip) && (it->destport == st->destport))//dong ill
+                else if( (it->sourceip.ip_ == st->sourceip.ip_) && (it->sourceport == st->sourceport) &&
+                         (it->destip.ip_ == st->destip.ip_) && (it->destport == st->destport))//dong ill
                 {
                     tmpvec.push_back(*st);
                 }
             }
+            stat[tmp] = tmpvec;
         }
-        stat[tmp] = tmpvec;
     }
     vector<DisplayInfo> result;
     for(mit = stat.begin();mit != stat.end();mit++){
@@ -115,13 +120,13 @@ void statistics(){
                 dtmp.sbyte += it->bytelen;
                 dtmp.scount += it->bytelen;
             }
-            result.push_back(dtmp);
         }
+        result.push_back(dtmp);
     }
-
     for(vector<DisplayInfo>::iterator it = result.begin();it != result.end();it++){
         cout << "IP A: " << string(it->sip) << endl << "IP B: " << string(it->dip) << endl << "port A: " << it->sp << endl << "port B: " << it->dp
               << endl << "All count: " << it->dcount + it->scount << endl << "All packet byte: " << it->dbyte + it->sbyte << endl << "count A-->B: " << it->scount << endl
              << "count B-->A: " << it->dcount << endl << "Byte A-->B: " << it->sbyte << endl << "Byte B-->A: " << it->dbyte << endl << endl << endl;
+
     }
 }
